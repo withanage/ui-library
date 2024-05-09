@@ -10,6 +10,6 @@ jobs:
   run-tests:
     runs-on: ubuntu-latest
     steps:
-     - uses: pkp/pkp-ui-library-action
+     - uses: withanage/pkp-ui-library-action@main
        with:
          node_version: 20
