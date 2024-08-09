@@ -12,7 +12,7 @@
 				*
 				<span class="-screenReader">{{ t('common.required') }}</span>
 			</span>
-			<tooltip
+			<Tooltip
 				v-if="isPrimaryLocale && tooltip"
 				aria-hidden="true"
 				:tooltip="tooltip"
@@ -24,7 +24,7 @@
 				class="-screenReader"
 				v-html="tooltip"
 			/>
-			<help-button
+			<HelpButton
 				v-if="isPrimaryLocale && helpTopic"
 				:id="describedByHelpId"
 				:topic="helpTopic"
@@ -39,7 +39,9 @@
 			v-html="description"
 		/>
 		<div class="pkpFormField__control">
-			<VueDraggable
+			<!-- avoid creating VueDraggable when not necessary as it was causing random problems with multiple VueDraggables in the form -->
+			<component
+				:is="isOrderable ? 'VueDraggable' : 'div'"
 				ref="el"
 				v-model="localizedOptions"
 				:disabled="!isOrderable"
@@ -84,7 +86,7 @@
 						class="pkpFormField--options__optionLabel"
 						v-html="option.label"
 					/>
-					<orderer
+					<Orderer
 						v-if="isOrderable"
 						:item-id="option.value"
 						:item-title="option.label"
@@ -92,15 +94,15 @@
 						@down="optionOrderDown"
 					/>
 				</label>
-			</VueDraggable>
-			<multilingual-progress
+			</component>
+			<MultilingualProgress
 				v-if="isMultilingual && locales.length > 1"
 				:id="multilingualProgressId"
 				:count="multilingualFieldsCompleted"
 				:total="locales.length"
 			/>
 		</div>
-		<field-error
+		<FieldError
 			v-if="errors && errors.length"
 			:id="describedByErrorId"
 			:messages="errors"
@@ -112,12 +114,20 @@
 import FieldBase from './FieldBase.vue';
 import {VueDraggable} from 'vue-draggable-plus';
 import Orderer from '@/components/Orderer/Orderer.vue';
+import Tooltip from '@/components/Tooltip/Tooltip.vue';
+import HelpButton from '@/components/HelpButton/HelpButton.vue';
+import MultilingualProgress from '@/components/MultilingualProgress/MultilingualProgress.vue';
+import FieldError from '@/components/Form/FieldError.vue';
 
 export default {
 	name: 'FieldOptions',
 	components: {
 		VueDraggable,
 		Orderer,
+		Tooltip,
+		HelpButton,
+		MultilingualProgress,
+		FieldError,
 	},
 	extends: FieldBase,
 	props: {

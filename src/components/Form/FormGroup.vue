@@ -62,6 +62,7 @@ import FieldPubId from './fields/FieldPubId.vue';
 import FieldHtml from './fields/FieldHtml.vue';
 import FieldMetadataSetting from './fields/FieldMetadataSetting.vue';
 import FieldOptions from './fields/FieldOptions.vue';
+import FieldOrcid from './fields/FieldOrcid.vue';
 import FieldPreparedContent from './fields/FieldPreparedContent.vue';
 import FieldRadioInput from './fields/FieldRadioInput.vue';
 import FieldRichTextarea from './fields/FieldRichTextarea.vue';
@@ -78,6 +79,8 @@ import FieldUpload from './fields/FieldUpload.vue';
 import FieldSlider from './fields/FieldSlider.vue';
 import FieldUploadImage from './fields/FieldUploadImage.vue';
 
+import {shouldShowFieldWithinGroup} from './formHelpers';
+
 export default {
 	name: 'FormGroup',
 	components: {
@@ -90,6 +93,7 @@ export default {
 		FieldHtml,
 		FieldMetadataSetting,
 		FieldOptions,
+		FieldOrcid,
 		FieldPreparedContent,
 		FieldRadioInput,
 		FieldRichTextarea,
@@ -127,7 +131,9 @@ export default {
 		 */
 		fieldsInGroup() {
 			return this.fields.filter(
-				(field) => field.groupId === this.id && this.shouldShowField(field),
+				(field) =>
+					field.groupId === this.id &&
+					shouldShowFieldWithinGroup(field, this.fields),
 			);
 		},
 
@@ -154,30 +160,6 @@ export default {
 		},
 
 		/**
-		 * Should a field be shown?
-		 *
-		 * @param {Object} field One of this.fields
-		 * @return {Boolean}
-		 */
-		shouldShowField: function (field) {
-			if (typeof field.showWhen === 'undefined') {
-				return true;
-			}
-			const whenFieldName =
-				typeof field.showWhen === 'string' ? field.showWhen : field.showWhen[0];
-			const whenField = this.fields.find(
-				(field) => field.name === whenFieldName,
-			);
-			if (!whenField) {
-				return false;
-			}
-			if (typeof field.showWhen === 'string') {
-				return !!whenField.value;
-			}
-			return whenField.value === field.showWhen[1];
-		},
-
-		/**
 		 * Respond to a field changing its errors
 		 *
 		 * @param {String} name Field name
@@ -185,7 +167,19 @@ export default {
 		 * @param {String} localeKey The locale key for a multilingual field
 		 */
 		setFieldErrors: function (name, errors, localeKey = '') {
-			let newErrors = {...this.errors};
+			/**
+			 * Better practice is to make to copy of data, modify it and send it upstream
+			 * But there is challenge with #9996, where each unmounted fields needs to clean up
+			 * its error. And given its happening synchronously, it does not propagate updated errors
+			 * object in between the unmounts. Therefore last operation would override the previous ones.
+			 *
+			 * Changing error object inplace ensures all the updates gets registered.
+			 *
+			 * In future better approach would be to have remove-error event, which defines what to remove
+			 * and would be correctly processed by the state manager
+			 */
+
+			let newErrors = this.errors;
 			if (!errors || !errors.length) {
 				if (localeKey && newErrors[name] && newErrors[name][localeKey]) {
 					delete newErrors[name][localeKey];
@@ -200,7 +194,7 @@ export default {
 					newErrors[name] = errors;
 				}
 			}
-			this.$emit('set-errors', newErrors);
+			this.$emit('set-errors', {...newErrors});
 		},
 	},
 };

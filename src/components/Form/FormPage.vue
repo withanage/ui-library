@@ -1,6 +1,6 @@
 <template>
 	<div class="pkpFormPage" :class="{'pkpFormPage--current': isCurrentPage}">
-		<form-group
+		<FormGroup
 			v-for="group in groupsInPage"
 			:key="group.id"
 			v-bind="group"
@@ -13,13 +13,13 @@
 			@change="fieldChanged"
 			@set-errors="setErrors"
 		/>
-		<button-row
+		<ButtonRow
 			v-if="hasFooter"
 			ref="footer"
 			class="pkpFormPage__footer"
 			aria-live="polite"
 		>
-			<form-errors
+			<FormErrors
 				v-if="Object.keys(errors).length"
 				:errors="errors"
 				:fields="fields"
@@ -29,23 +29,31 @@
 			<span role="status" aria-live="polite" aria-atomic="true">
 				<transition name="pkpFormPage__status">
 					<span v-if="isSaving" class="pkpFormPage__status">
-						<spinner />
+						<Spinner />
 						{{ t('common.saving') }}
 					</span>
 					<span v-else-if="hasRecentSave" class="pkpFormPage__status">
-						<icon icon="check" :inline="true" />
+						<Icon icon="check" :inline="true" />
 						{{ t('form.saved') }}
 					</span>
 				</transition>
 			</span>
-			<pkp-button
+			<PkpButton
+				v-if="cancelButton"
+				v-bind="cancelButton"
+				:is-warnable="true"
+				@click="cancel"
+			>
+				{{ cancelButton.label || t('common.cancel') }}
+			</PkpButton>
+			<PkpButton
 				v-if="previousButton"
 				v-bind="previousButton"
 				@click="previousPage"
 			>
 				{{ previousButton.label }}
-			</pkp-button>
-			<pkp-button
+			</PkpButton>
+			<PkpButton
 				v-if="submitButton"
 				v-bind="submitButton"
 				:disabled="
@@ -54,8 +62,8 @@
 				@click="submit"
 			>
 				{{ submitButton.label }}
-			</pkp-button>
-		</button-row>
+			</PkpButton>
+		</ButtonRow>
 	</div>
 </template>
 
@@ -63,13 +71,20 @@
 import ButtonRow from '@/components/ButtonRow/ButtonRow.vue';
 import FormErrors from '@/components/Form/FormErrors.vue';
 import FormGroup from '@/components/Form/FormGroup.vue';
+import PkpButton from '@/components/Button/Button.vue';
+import Spinner from '@/components/Spinner/Spinner.vue';
+import Icon from '@/components/Icon/Icon.vue';
 
+import {shouldShowGroup} from './formHelpers';
 export default {
 	name: 'FormPage',
 	components: {
 		ButtonRow,
 		FormErrors,
 		FormGroup,
+		PkpButton,
+		Spinner,
+		Icon,
 	},
 	props: {
 		id: String,
@@ -85,6 +100,7 @@ export default {
 		availableLocales: Array,
 		submitButton: Object,
 		previousButton: Object,
+		cancelButton: Object,
 		canSubmit: {
 			type: Boolean,
 			default() {
@@ -107,7 +123,8 @@ export default {
 		 */
 		groupsInPage() {
 			return this.groups.filter(
-				(group) => group.pageId === this.id && this.shouldShowGroup(group),
+				(group) =>
+					group.pageId === this.id && shouldShowGroup(group, this.fields),
 			);
 		},
 
@@ -169,6 +186,13 @@ export default {
 		},
 
 		/**
+		 * Cancel the form submission process
+		 */
+		cancel: function () {
+			this.$emit('cancel', this.id);
+		},
+
+		/**
 		 * Ask the Form to scroll to a field
 		 *
 		 * @param {String} fieldName
@@ -184,30 +208,6 @@ export default {
 		 */
 		showLocale: function (localeKey) {
 			this.$emit('showLocale', localeKey);
-		},
-
-		/**
-		 * Should a group be shown?
-		 *
-		 * @param {Object} group One of this.groups
-		 * @return {Boolean}
-		 */
-		shouldShowGroup: function (group) {
-			if (typeof group.showWhen === 'undefined') {
-				return true;
-			}
-			const whenFieldName =
-				typeof group.showWhen === 'string' ? group.showWhen : group.showWhen[0];
-			const whenField = this.fields.find(
-				(field) => field.name === whenFieldName,
-			);
-			if (!whenField) {
-				return false;
-			}
-			if (typeof group.showWhen === 'string') {
-				return !!whenField.value;
-			}
-			return whenField.value === group.showWhen[1];
 		},
 
 		/**

@@ -7,9 +7,27 @@ export function useModal() {
 		modalStore.openDialog(props);
 	}
 
-	function openSideModal(component, props) {
-		modalStore.openSideModal(component, props);
+	function openSideModal(component, props, opts) {
+		modalStore.openSideModal(component, props, opts);
 	}
 
-	return {openDialog, openSideModal};
+	function openDialogNetworkError(fetchError) {
+		modalStore.openDialogNetworkError(fetchError);
+	}
+
+	function closeSideModal(component) {
+		modalStore.closeSideModal(component);
+	}
+
+	function isSideModalOpened(component) {
+		modalStore.isSideModalOpened(component);
+	}
+
+	return {
+		openDialog,
+		openSideModal,
+		openDialogNetworkError,
+		closeSideModal,
+		isSideModalOpened,
+	};
 }

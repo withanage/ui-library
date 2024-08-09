@@ -52,6 +52,7 @@ import Edit from './icons/Edit.vue';
 import Email from './icons/Email.vue';
 import EmailOpened from './icons/EmailOpened.vue';
 import Expand from './icons/Expand.vue';
+import DefaultDocument from './icons/DefaultDocument.vue';
 import FileAudio from './icons/FileAudio.vue';
 import FileDoc from './icons/FileDoc.vue';
 import FileEpub from './icons/FileEpub.vue';
@@ -70,6 +71,7 @@ import Issues from './icons/Issues.vue';
 import Italics from './icons/Italics.vue';
 import LoginAs from './icons/LoginAs.vue';
 import MergeUser from './icons/MergeUser.vue';
+import MoreOptions from './icons/MoreOptions.vue';
 import MySubmissions from './icons/MySubmissions.vue';
 import NavDoi from './icons/NavDoi.vue';
 import Notifications from './icons/Notifications.vue';
@@ -99,6 +101,7 @@ const svgIcons = {
 	Cancel,
 	Complete,
 	Dashboard,
+	DefaultDocument,
 	DecreaseTextSize,
 	DisableUser,
 	Dropdown,
@@ -124,6 +127,7 @@ const svgIcons = {
 	Italics,
 	LoginAs,
 	MergeUser,
+	MoreOptions,
 	MySubmissions,
 	NavDoi,
 	Notifications,

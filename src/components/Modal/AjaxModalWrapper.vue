@@ -20,14 +20,14 @@ const {legacyOptions} = defineProps({
 	},
 });
 
+const closeModal = inject('closeModal');
+
 const contentDiv = ref(null);
 // eslint-disable-next-line no-unused-vars
 const pkp = window.pkp;
 
 // Fetches html content from legacy endpoints
-const {data: modalData, fetch: fetchAssignParticipantPage} = useFetch(
-	legacyOptions.url,
-);
+const {data: modalData, fetch: fetchModalData} = useFetch(legacyOptions.url);
 
 // Legacy modal has mechanism where it needs to check with form whether it can close
 // Mimicking this behaviour
@@ -68,12 +68,50 @@ function passToHandlerElement(...args) {
 	if (legacyOptions.modalHandler) {
 		legacyOptions.modalHandler.getHtmlElement().trigger(...args);
 	}
+	// when legacy modal opened from vue.js, it does not have handler
+	// and needs to trigger close for some events
+	else {
+		const eventType = args?.[0]?.type;
+
+		if (eventType === 'dataChanged') {
+			// Naive implementation to check for notifications for the actions in modals that are now opened from Vue.js, instead of the grid.
+			// Logic to trigger these notifications is LinkActionHandler.dataChangedHandler_
+			$('body').trigger('notifyUser');
+		}
+		if (
+			[
+				'formSubmitted',
+				'formCanceled',
+				'ajaxHtmlError',
+				'modalFinished',
+				'wizardClose',
+				'wizardCancel',
+			].includes(eventType)
+		) {
+			closeModal();
+		}
+	}
 
 	return;
 }
 
+function onVueFormSuccess(formId) {
+	if (
+		legacyOptions.closeOnFormSuccessId &&
+		legacyOptions.closeOnFormSuccessId === formId
+	) {
+		setTimeout(function () {
+			if (legacyOptions.modalHandler) {
+				legacyOptions.modalHandler.modalClose();
+			} else {
+				closeModal();
+			}
+		}, 1000);
+	}
+}
+
 onMounted(async () => {
-	await fetchAssignParticipantPage();
+	await fetchModalData();
 	if (modalData.value) {
 		$(contentDiv.value).html(modalData.value.content);
 		$(contentDiv.value).bind('formSubmitted', passToHandlerElement);
@@ -92,6 +130,9 @@ onMounted(async () => {
 		$(contentDiv.value).bind('dataChanged', passToHandlerElement);
 		$(contentDiv.value).bind('updateHeader', passToHandlerElement);
 		$(contentDiv.value).bind('gridRefreshRequested', passToHandlerElement);
+
+		// to handle Vue.js form global form-success event, mimicking behavior from ModalHandler.js
+		pkp.eventBus.$on('form-success', onVueFormSuccess);
 	}
 });
 
@@ -108,5 +149,6 @@ onBeforeUnmount(() => {
 	$(contentDiv.value).unbind('dataChanged', passToHandlerElement);
 	$(contentDiv.value).unbind('updateHeader', passToHandlerElement);
 	$(contentDiv.value).unbind('gridRefreshRequested', passToHandlerElement);
+	pkp.eventBus.$off('form-success', onVueFormSuccess);
 });
 </script>
