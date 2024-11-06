@@ -23,6 +23,7 @@ import PkpForm from '@/components/Form/Form.vue';
 defineProps({
 	title: {type: String, required: true},
 	currentTemplateForm: {required: true, type: Object},
+	canAssignUserGroups: {default: false, type: Boolean},
 });
 
 const emit = defineEmits(['updateCurrentTemplateForm', 'templateSaved']);

@@ -346,16 +346,36 @@ export default {
 			template = template || {};
 			this.currentTemplate = template;
 			const {openSideModal} = useModal();
-			this.$nextTick(() =>
-				openSideModal(EditTemplateModal, {
+
+			this.$nextTick(() => {
+				// Remove use group field if current mailable does not support specifying user group access
+				if (!this.currentMailable.canAssignUserGroupToTemplates) {
+					this.currentTemplateForm.fields =
+						this.currentTemplateForm.value.fields.filter(
+							(field) => field.name !== 'userGroupIds',
+						);
+				} else {
+					const userGroupField = this.currentTemplateForm.fields.find(
+						(field) => field.name === 'userGroupIds',
+					);
+					userGroupField.assignableUserGroups =
+						this.currentMailable['assignableTemplateUserGroups'];
+					userGroupField.assignedUserGroupIds = this.currentTemplate
+						? this.currentTemplate['assignedUserGroupIds']
+						: [];
+				}
+
+				return openSideModal(EditTemplateModal, {
 					title: this.currentTemplate
 						? t('manager.mailables.editTemplate')
 						: t('manager.emails.addEmail'),
 					currentTemplateForm: this.currentTemplateForm,
+					canAssignUserGroups:
+						this.currentMailable.canAssignUserGroupToTemplates,
 					onUpdateCurrentTemplateForm: this.updateCurrentTemplateForm,
 					onTemplateSaved: this.templateSaved,
-				}),
-			);
+				});
+			});
 		},
 
 		/**
